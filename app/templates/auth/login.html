@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+
+{% block title %}HelpDesk | Entrar{% endblock %}
+
+{% block content %}
+<section class="hd-auth">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-5">
+                <div class="card hd-card hd-auth-card">
+                    <div class="card-body p-4 p-md-5">
+                        <h1 class="h3 text-center mb-1">Entrar</h1>
+                        <p class="text-center text-muted mb-4">Acesse sua conta HelpDesk.</p>
+
+                        <form method="post" novalidate>
+                            {{ form.hidden_tag() }}
+
+                            {{ campo(form.email, placeholder="voce@empresa.com", autocomplete="email") }}
+                            {{ campo(form.senha, autocomplete="current-password") }}
+
+                            <div class="form-check mb-3">
+                                {{ form.lembrar(class="form-check-input") }}
+                                {{ form.lembrar.label(class="form-check-label") }}
+                            </div>
+
+                            {{ form.submit(class="btn btn-primary w-100") }}
+                        </form>
+
+                        <p class="text-center small mt-4 mb-0">
+                            Ainda não tem conta?
+                            <a href="{{ url_for('auth.cadastro') }}">Cadastre-se</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}HelpDesk | {{ titulo }}{% endblock %}
+
+{% block content %}
+<section class="container py-5 text-center">
+    <div class="hd-error-code">{{ codigo }}</div>
+    <h1 class="h3 mb-3">{{ titulo }}</h1>
+    <p class="text-muted mb-4">{{ mensagem }}</p>
+    <a class="btn btn-primary" href="{{ url_for('main.home') }}">Voltar ao início</a>
+</section>
+{% endblock %}

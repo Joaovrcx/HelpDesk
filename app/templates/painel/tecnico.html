@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "chamados/_macros.html" import tabela_chamados %}
+
+{% block title %}HelpDesk | Dashboard do técnico{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-0">Dashboard do técnico</h1>
+            <p class="text-muted mb-0">Chamados disponíveis e seus atendimentos.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('chamados.lista') }}">Ver chamados disponíveis</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <a class="text-decoration-none" href="{{ url_for('chamados.lista', escopo='disponiveis') }}">
+                <div class="card hd-card hd-stat hd-stat-aberto">
+                    <div class="card-body">
+                        <div class="hd-stat-number">{{ total_disponiveis }}</div>
+                        <div class="hd-stat-label">Disponíveis</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a class="text-decoration-none" href="{{ url_for('chamados.lista', escopo='meus', status='em_andamento') }}">
+                <div class="card hd-card hd-stat hd-stat-andamento">
+                    <div class="card-body">
+                        <div class="hd-stat-number">{{ em_andamento }}</div>
+                        <div class="hd-stat-label">Meus em andamento</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a class="text-decoration-none" href="{{ url_for('chamados.lista', escopo='meus', status='concluido') }}">
+                <div class="card hd-card hd-stat hd-stat-concluido">
+                    <div class="card-body">
+                        <div class="hd-stat-number">{{ concluidos }}</div>
+                        <div class="hd-stat-label">Concluídos por mim</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="card hd-card hd-static mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Meus atendimentos em andamento</h2>
+            <a class="small" href="{{ url_for('chamados.lista', escopo='meus') }}">Ver todos os meus</a>
+        </div>
+        {{ tabela_chamados(meus_ativos, mostrar_solicitante=true) }}
+    </div>
+
+    <div class="card hd-card hd-static">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Próximos chamados disponíveis</h2>
+            <a class="small" href="{{ url_for('chamados.lista') }}">Ver todos</a>
+        </div>
+        {{ tabela_chamados(disponiveis, mostrar_solicitante=true) }}
+    </div>
+</section>
+{% endblock %}

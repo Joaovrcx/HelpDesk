@@ -1,0 +1,75 @@
+{# Macros de chamados: badges, tabela e linha do tempo do histórico #}
+
+{% macro badge_status(chamado) %}
+{% set cores = {"aberto": "text-bg-warning", "em_andamento": "text-bg-primary", "concluido": "text-bg-success"} %}
+<span class="badge {{ cores.get(chamado.status, 'text-bg-secondary') }}">{{ chamado.status_legivel }}</span>
+{%- endmacro %}
+
+{% macro badge_prioridade(chamado) %}
+{% set cores = {"alta": "text-bg-danger", "media": "text-bg-info", "baixa": "text-bg-secondary"} %}
+<span class="badge {{ cores.get(chamado.prioridade, 'text-bg-secondary') }}">{{ chamado.prioridade_legivel }}</span>
+{%- endmacro %}
+
+{% macro tabela_chamados(chamados, mostrar_solicitante=false) %}
+{% if chamados %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Título</th>
+                <th scope="col" class="d-none d-md-table-cell">Categoria</th>
+                <th scope="col">Prioridade</th>
+                <th scope="col">Status</th>
+                {% if mostrar_solicitante %}
+                <th scope="col" class="d-none d-lg-table-cell">Solicitante</th>
+                {% endif %}
+                <th scope="col" class="d-none d-lg-table-cell">Técnico</th>
+                <th scope="col" class="d-none d-md-table-cell">Aberto em</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in chamados %}
+            <tr>
+                <td>{{ c.id }}</td>
+                <td><a href="{{ url_for('chamados.detalhe', chamado_id=c.id) }}">{{ c.titulo }}</a></td>
+                <td class="d-none d-md-table-cell">{{ c.categoria_legivel }}</td>
+                <td>{{ badge_prioridade(c) }}</td>
+                <td>{{ badge_status(c) }}</td>
+                {% if mostrar_solicitante %}
+                <td class="d-none d-lg-table-cell">{{ c.solicitante.nome }}</td>
+                {% endif %}
+                <td class="d-none d-lg-table-cell">
+                    {% if c.tecnico %}{{ c.tecnico.nome }}{% else %}<span class="text-muted">Aguardando</span>{% endif %}
+                </td>
+                <td class="d-none d-md-table-cell">{{ c.criado_em|datahora }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted text-center py-4 mb-0">Nenhum chamado encontrado.</p>
+{% endif %}
+{% endmacro %}
+
+{% macro historico(eventos) %}
+<ol class="hd-timeline list-unstyled mb-0">
+    {% for e in eventos %}
+    <li class="hd-timeline-item">
+        <div class="d-flex flex-wrap justify-content-between gap-1">
+            <strong>{{ e.tipo_legivel }}</strong>
+            <span class="text-muted small">{{ e.criado_em|datahora }}</span>
+        </div>
+        <div class="small text-muted">por {{ e.autor.nome }} ({{ e.autor.tipo_legivel }})</div>
+        {% if e.status_anterior and e.status_novo %}
+        <div class="small">
+            Status: {{ STATUS_LABELS.get(e.status_anterior, e.status_anterior) }}
+            &rarr; {{ STATUS_LABELS.get(e.status_novo, e.status_novo) }}
+        </div>
+        {% endif %}
+        <p class="mb-0 mt-1 hd-pre">{{ e.descricao }}</p>
+    </li>
+    {% endfor %}
+</ol>
+{% endmacro %}

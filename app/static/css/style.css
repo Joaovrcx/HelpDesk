@@ -1,0 +1,177 @@
+/* =========================================================
+   HelpDesk - Estilos do projeto
+   Organização:
+   1. Variáveis
+   2. Base
+   3. Navbar e rodapé
+   4. Página inicial (hero e cards)
+   5. Login e cadastro
+   6. Painel
+   7. Páginas de erro
+   8. Chamados (dashboards, detalhes e histórico)
+   ========================================================= */
+
+/* 1. Variáveis ------------------------------------------- */
+:root {
+    --hd-primary: #0d6efd;
+    --hd-primary-dark: #0a3d91;
+    --hd-bg: #f5f7fb;
+    --hd-text: #212529;
+    --hd-footer-bg: #1f2937;
+    --hd-footer-text: #cbd5e1;
+}
+
+/* 2. Base ------------------------------------------------ */
+body {
+    background-color: var(--hd-bg);
+    color: var(--hd-text);
+}
+
+/* 3. Navbar e rodapé ------------------------------------- */
+.hd-navbar {
+    background-color: var(--hd-primary-dark);
+}
+
+.hd-footer {
+    background-color: var(--hd-footer-bg);
+    color: var(--hd-footer-text);
+}
+
+/* 4. Página inicial -------------------------------------- */
+.hd-hero {
+    background: linear-gradient(135deg, var(--hd-primary-dark), var(--hd-primary));
+    color: #fff;
+    padding: 5rem 0;
+}
+
+.hd-hero-text {
+    max-width: 640px;
+}
+
+.hd-card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hd-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.hd-step {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background-color: var(--hd-primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 5. Login e cadastro ------------------------------------ */
+.hd-auth {
+    padding: 3rem 0;
+}
+
+/* O card de formulário não deve "pular" ao passar o mouse */
+.hd-auth-card:hover,
+.hd-panel-card:hover {
+    transform: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* 6. Painel ---------------------------------------------- */
+.hd-panel-card {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+/* 7. Páginas de erro ------------------------------------- */
+.hd-error-code {
+    font-size: 5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--hd-primary);
+    margin-bottom: 1rem;
+}
+
+/* 8. Chamados -------------------------------------------- */
+/* Cards sem efeito de "levantar" ao passar o mouse (listas e formulários) */
+.hd-static:hover {
+    transform: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Cartões de números dos dashboards (clicáveis) */
+.hd-stat {
+    border-left: 5px solid var(--hd-primary);
+}
+
+.hd-stat-aberto { border-left-color: #ffc107; }
+.hd-stat-andamento { border-left-color: var(--hd-primary); }
+.hd-stat-concluido { border-left-color: #198754; }
+
+.hd-stat-number {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--hd-text);
+}
+
+.hd-stat-label {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+/* Preserva quebras de linha de textos digitados pelos usuários */
+.hd-pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+/* Informações laterais do chamado */
+.hd-info dt {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #6c757d;
+}
+
+.hd-info dd {
+    margin-bottom: 0.9rem;
+}
+
+/* Linha do tempo do histórico */
+.hd-timeline {
+    position: relative;
+    padding-left: 1.5rem;
+    border-left: 2px solid #dee2e6;
+}
+
+.hd-timeline-item {
+    position: relative;
+    padding-bottom: 1.25rem;
+}
+
+.hd-timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.hd-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: calc(-1.5rem - 7px);
+    top: 0.35rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--hd-primary);
+    border: 2px solid var(--hd-bg);
+}

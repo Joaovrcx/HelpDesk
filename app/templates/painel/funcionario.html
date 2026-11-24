@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "chamados/_macros.html" import tabela_chamados %}
+
+{% block title %}HelpDesk | Dashboard do funcionário{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h1 class="h3 mb-0">Dashboard do funcionário</h1>
+            <p class="text-muted mb-0">Acompanhe seus chamados de suporte.</p>
+        </div>
+        <a class="btn btn-primary" href="{{ url_for('chamados.novo') }}">Abrir novo chamado</a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <a class="text-decoration-none" href="{{ url_for('chamados.lista', status='aberto') }}">
+                <div class="card hd-card hd-stat hd-stat-aberto">
+                    <div class="card-body">
+                        <div class="hd-stat-number">{{ contagem.aberto }}</div>
+                        <div class="hd-stat-label">Abertos</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a class="text-decoration-none" href="{{ url_for('chamados.lista', status='em_andamento') }}">
+                <div class="card hd-card hd-stat hd-stat-andamento">
+                    <div class="card-body">
+                        <div class="hd-stat-number">{{ contagem.em_andamento }}</div>
+                        <div class="hd-stat-label">Em andamento</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a class="text-decoration-none" href="{{ url_for('chamados.lista', status='concluido') }}">
+                <div class="card hd-card hd-stat hd-stat-concluido">
+                    <div class="card-body">
+                        <div class="hd-stat-number">{{ contagem.concluido }}</div>
+                        <div class="hd-stat-label">Concluídos</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="card hd-card hd-static">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Chamados recentes</h2>
+            <a class="small" href="{{ url_for('chamados.lista') }}">Ver todos</a>
+        </div>
+        {{ tabela_chamados(recentes) }}
+    </div>
+</section>
+{% endblock %}

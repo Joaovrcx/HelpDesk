@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "chamados/_macros.html" import badge_status, badge_prioridade, historico %}
+
+{% block title %}HelpDesk | Chamado #{{ chamado.id }}{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+    <a class="small" href="{{ url_for('chamados.lista') }}">&larr; Voltar para a lista</a>
+
+    <div class="row g-4 mt-1">
+        <!-- Coluna principal -->
+        <div class="col-lg-8">
+            <div class="card hd-card hd-static mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                        <h1 class="h4 mb-0">#{{ chamado.id }} &middot; {{ chamado.titulo }}</h1>
+                        <div class="d-flex gap-1">
+                            {{ badge_prioridade(chamado) }}
+                            {{ badge_status(chamado) }}
+                        </div>
+                    </div>
+
+                    <h2 class="h6 text-muted">Descrição</h2>
+                    <p class="hd-pre">{{ chamado.descricao }}</p>
+
+                    {% if chamado.solucao %}
+                    <div class="alert alert-success mb-0" role="alert">
+                        <h2 class="h6 alert-heading">Solução</h2>
+                        <p class="hd-pre mb-0">{{ chamado.solucao }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card hd-card hd-static">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Histórico de atualizações</h2>
+                    {{ historico(chamado.historico) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna lateral -->
+        <div class="col-lg-4">
+            <div class="card hd-card hd-static mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Informações</h2>
+                    <dl class="mb-0 hd-info">
+                        <dt>Solicitante</dt>
+                        <dd>{{ chamado.solicitante.nome }}</dd>
+
+                        <dt>Técnico responsável</dt>
+                        <dd>
+                            {% if chamado.tecnico %}{{ chamado.tecnico.nome }}
+                            {% else %}<span class="text-muted">Aguardando um técnico</span>{% endif %}
+                        </dd>
+
+                        <dt>Categoria</dt>
+                        <dd>{{ chamado.categoria_legivel }}</dd>
+
+                        <dt>Criado em</dt>
+                        <dd>{{ chamado.criado_em|datahora }}</dd>
+
+                        <dt>Última atualização</dt>
+                        <dd>{{ chamado.atualizado_em|datahora }}</dd>
+
+                        <dt>Concluído em</dt>
+                        <dd class="mb-0">{{ chamado.concluido_em|datahora }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+            {% if pode_assumir %}
+            <div class="card hd-card hd-static mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-2">Atendimento</h2>
+                    <p class="small text-muted">Ao assumir, o chamado passa para Em andamento e fica sob sua responsabilidade.</p>
+                    <form method="post" action="{{ url_for('chamados.assumir', chamado_id=chamado.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary w-100">Assumir atendimento</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if eh_responsavel and chamado.status == 'em_andamento' %}
+            <div class="card hd-card hd-static mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Registrar comentário</h2>
+                    <form method="post" action="{{ url_for('chamados.comentar', chamado_id=chamado.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="texto" class="visually-hidden">Comentário</label>
+                            <textarea id="texto" name="texto" class="form-control" rows="3"
+                                      placeholder="Informações sobre o atendimento"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary w-100">Adicionar comentário</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card hd-card hd-static">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Concluir chamado</h2>
+                    <form method="post" action="{{ url_for('chamados.concluir', chamado_id=chamado.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="solucao" class="visually-hidden">Solução aplicada</label>
+                            <textarea id="solucao" name="solucao" class="form-control" rows="3"
+                                      placeholder="Descreva a solução aplicada"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Registrar solução e concluir</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

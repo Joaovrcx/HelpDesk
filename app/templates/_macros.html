@@ -1,0 +1,19 @@
+{# Macros reutilizáveis de formulário (Bootstrap 5) #}
+
+{% macro campo(field, placeholder="", autocomplete="", rows=6) %}
+{% set extras = {"autocomplete": autocomplete} if autocomplete else {} %}
+{% set classe = ("form-select" if field.type == "SelectField" else "form-control") ~ (" is-invalid" if field.errors else "") %}
+<div class="mb-3">
+    {{ field.label(class="form-label") }}
+    {% if field.type == "TextAreaField" %}
+    {{ field(class=classe, placeholder=placeholder, rows=rows, **extras) }}
+    {% elif field.type == "SelectField" %}
+    {{ field(class=classe, **extras) }}
+    {% else %}
+    {{ field(class=classe, placeholder=placeholder, **extras) }}
+    {% endif %}
+    {% for erro in field.errors %}
+    <div class="invalid-feedback">{{ erro }}</div>
+    {% endfor %}
+</div>
+{% endmacro %}

@@ -1,0 +1,28 @@
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Variáveis de ambiente (nunca versionar segredos)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Banco de dados (a pasta instance/ é mantida, o conteúdo não)
+instance/*
+!instance/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor e sistema operacional
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

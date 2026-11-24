@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import campo %}
+
+{% block title %}HelpDesk | Novo chamado{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card hd-card hd-static">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3 mb-1">Abrir novo chamado</h1>
+                    <p class="text-muted mb-4">Descreva o problema de informática para a equipe de suporte.</p>
+
+                    <form method="post" novalidate>
+                        {{ form.hidden_tag() }}
+
+                        {{ campo(form.titulo, placeholder="Ex.: Impressora do 2º andar não imprime") }}
+
+                        <div class="row">
+                            <div class="col-md-6">{{ campo(form.categoria) }}</div>
+                            <div class="col-md-6">{{ campo(form.prioridade) }}</div>
+                        </div>
+
+                        {{ campo(form.descricao, placeholder="O que aconteceu? Desde quando? Alguma mensagem de erro?") }}
+
+                        <div class="d-flex gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a class="btn btn-outline-secondary" href="{{ url_for('chamados.lista') }}">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

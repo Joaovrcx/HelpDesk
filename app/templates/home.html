@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}HelpDesk | Início{% endblock %}
+
+{% block content %}
+<!-- Destaque principal -->
+<section class="hd-hero text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold">HelpDesk</h1>
+        <p class="lead mx-auto hd-hero-text">
+            Sistema de gerenciamento de chamados de suporte técnico interno.
+            Chega de pedir ajuda de maneira informal: registre seu problema
+            de informática e acompanhe a solução em um só lugar.
+        </p>
+        <div class="mt-4">
+            {% if current_user.is_authenticated %}
+            <a class="btn btn-light btn-lg" href="{{ url_for('painel.index') }}">Ir para o painel</a>
+            {% else %}
+            <a class="btn btn-light btn-lg me-2" href="{{ url_for('auth.login') }}">Entrar</a>
+            <a class="btn btn-outline-light btn-lg" href="{{ url_for('auth.cadastro') }}">Criar conta</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Como funciona -->
+<section class="container py-5">
+    <h2 class="h3 text-center mb-4">Como funciona</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 hd-card text-center">
+                <div class="card-body">
+                    <div class="hd-step">1</div>
+                    <h3 class="h5 card-title">Abra um chamado</h3>
+                    <p class="card-text">
+                        O funcionário descreve o problema de informática
+                        que está enfrentando.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 hd-card text-center">
+                <div class="card-body">
+                    <div class="hd-step">2</div>
+                    <h3 class="h5 card-title">Acompanhe o andamento</h3>
+                    <p class="card-text">
+                        A equipe de suporte recebe o chamado e atualiza
+                        o status conforme avança no atendimento.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 hd-card text-center">
+                <div class="card-body">
+                    <div class="hd-step">3</div>
+                    <h3 class="h5 card-title">Problema resolvido</h3>
+                    <p class="card-text">
+                        Com a solução registrada, o chamado é encerrado
+                        e o histórico fica guardado.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "chamados/_macros.html" import tabela_chamados %}
+
+{% block title %}HelpDesk | {{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h1 class="h3 mb-0">{{ titulo_pagina }}</h1>
+        {% if not current_user.is_tecnico %}
+        <a class="btn btn-primary" href="{{ url_for('chamados.novo') }}">Novo chamado</a>
+        {% endif %}
+    </div>
+
+    <!-- Filtros (GET: não alteram dados, por isso não precisam de CSRF) -->
+    <form method="get" class="card hd-card hd-static mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                {% if current_user.is_tecnico %}
+                <div class="col-sm-6 col-lg-3">
+                    <label for="escopo" class="form-label">Exibir</label>
+                    <select id="escopo" name="escopo" class="form-select">
+                        <option value="disponiveis" {{ 'selected' if filtros.escopo == 'disponiveis' }}>Chamados disponíveis</option>
+                        <option value="meus" {{ 'selected' if filtros.escopo == 'meus' }}>Meus atendimentos</option>
+                        <option value="todos" {{ 'selected' if filtros.escopo == 'todos' }}>Todos os visíveis</option>
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-sm-6 col-lg-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Todos</option>
+                        {% for valor, rotulo in STATUS_LABELS.items() %}
+                        <option value="{{ valor }}" {{ 'selected' if filtros.status == valor }}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="prioridade" class="form-label">Prioridade</label>
+                    <select id="prioridade" name="prioridade" class="form-select">
+                        <option value="">Todas</option>
+                        {% for valor, rotulo in PRIORIDADE_LABELS.items() %}
+                        <option value="{{ valor }}" {{ 'selected' if filtros.prioridade == valor }}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">Filtrar</button>
+                    <a href="{{ url_for('chamados.lista') }}" class="btn btn-outline-secondary flex-fill">Limpar</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div class="card hd-card hd-static">
+        {{ tabela_chamados(chamados, mostrar_solicitante=current_user.is_tecnico) }}
+    </div>
+    <p class="text-muted small mt-2 mb-0">{{ chamados|length }} chamado(s) encontrado(s).</p>
+</section>
+{% endblock %}
