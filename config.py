@@ -27,11 +27,24 @@ def _fuso_horas():
         return -3
 
 
+def _alerta_espera_horas():
+    """Limite (em horas) para destacar chamados parados. Padrão: 24."""
+    try:
+        valor = int(os.environ.get("ALERTA_ESPERA_HORAS", "24"))
+    except ValueError:
+        return 24
+    return valor if valor > 0 else 24
+
+
 class Config:
     """Configuração base, usada em qualquer ambiente."""
 
     # As datas são guardadas em UTC e exibidas com esta diferença de horas.
     FUSO_HORARIO_HORAS = _fuso_horas()
+
+    # Alerta VISUAL nos dashboards: chamados abertos (ou atendimentos sem
+    # atualização) há mais de N horas ganham destaque. Não é um prazo (SLA).
+    ALERTA_ESPERA_HORAS = _alerta_espera_horas()
 
     # Chave usada para assinar sessões e proteger formulários (CSRF).
     # Em produção, SEMPRE defina uma chave própria no arquivo .env.

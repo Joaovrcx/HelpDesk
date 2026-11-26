@@ -52,10 +52,11 @@ def create_app(config_class=Config):
     register_commands(app)
 
     # Recursos disponíveis em todos os templates (inclusive dentro de macros)
-    from app.utils import formatar_datahora
+    from app.utils import formatar_datahora, formatar_duracao
 
     horas = app.config.get("FUSO_HORARIO_HORAS", -3)
     app.jinja_env.filters["datahora"] = lambda valor: formatar_datahora(valor, horas)
+    app.jinja_env.filters["duracao"] = formatar_duracao
     app.jinja_env.globals.update(
         STATUS_LABELS=models.STATUS_LABELS,
         PRIORIDADE_LABELS=models.PRIORIDADE_LABELS,

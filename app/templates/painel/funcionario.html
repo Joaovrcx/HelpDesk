@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "chamados/_macros.html" import tabela_chamados %}
+{% from "painel/_indicadores.html" import kpi, grafico_status, barras_prioridade, grafico_7_dias, aviso_espera, atualizacoes %}
 
 {% block title %}HelpDesk | Dashboard do funcionário{% endblock %}
 
@@ -46,12 +47,65 @@
         </div>
     </div>
 
+    {% if espera.quantidade_longa %}
+    <div class="mb-4">
+        {{ aviso_espera(espera, limite_alerta_horas,
+                        "Você tem 1 chamado aberto aguardando atendimento",
+                        "Você tem {} chamados abertos aguardando atendimento") }}
+    </div>
+    {% endif %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            {{ kpi(total_chamados, "Total de chamados") }}
+        </div>
+        <div class="col-6 col-lg-3">
+            {{ kpi(espera.quantidade, "Aguardando técnico",
+                   ("Maior espera: " ~ (espera.mais_longa|duracao)) if espera.mais_longa else none,
+                   alerta=espera.quantidade_longa > 0) }}
+        </div>
+        <div class="col-12 col-lg-6">
+            {{ kpi(tempo_medio_resolucao|duracao, "Tempo médio de resolução",
+                   "Da abertura até a conclusão, nos chamados concluídos.") }}
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-6">
+            <div class="card hd-card hd-static h-100">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Chamados por status</h2></div>
+                <div class="card-body">{{ grafico_status(barra_status) }}</div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card hd-card hd-static h-100">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Pendentes por prioridade</h2></div>
+                <div class="card-body">{{ barras_prioridade(por_prioridade, "Nenhum chamado pendente.") }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+            <div class="card hd-card hd-static h-100">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Últimos 7 dias</h2></div>
+                <div class="card-body">{{ grafico_7_dias(serie_7_dias, "abertos", "Abertos", "concluidos", "Concluídos") }}</div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card hd-card hd-static h-100">
+                <div class="card-header bg-white"><h2 class="h5 mb-0">Últimas atualizações</h2></div>
+                <div class="card-body">{{ atualizacoes(ultimas_atualizacoes) }}</div>
+            </div>
+        </div>
+    </div>
+
     <div class="card hd-card hd-static">
         <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">Chamados recentes</h2>
             <a class="small" href="{{ url_for('chamados.lista') }}">Ver todos</a>
         </div>
-        {{ tabela_chamados(recentes) }}
+        {{ tabela_chamados(recentes, destacar_ids=espera.ids_longa, rotulo_alerta="Aguardando há muito tempo") }}
     </div>
 </section>
 {% endblock %}

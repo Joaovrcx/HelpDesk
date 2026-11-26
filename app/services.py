@@ -7,6 +7,9 @@ que tentam assumir o mesmo chamado ao mesmo tempo nunca conseguem os dois:
 um UPDATE altera 1 linha e o outro altera 0.
 """
 
+from datetime import timedelta
+
+from flask import current_app
 from sqlalchemy import and_, case, func, or_, select, update
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -17,6 +20,7 @@ from app.models import (
     EVENTO_COMENTARIO,
     EVENTO_CONCLUSAO,
     PRIORIDADE_ALTA,
+    PRIORIDADE_LABELS,
     PRIORIDADE_MEDIA,
     STATUS_ABERTO,
     STATUS_CONCLUIDO,
@@ -26,6 +30,16 @@ from app.models import (
     HistoricoChamado,
     agora_utc,
 )
+from app.indicadores import (
+    barra_status,
+    barras_prioridade,
+    contar_chaves,
+    contar_desde,
+    resumir_espera,
+    serie_dupla,
+    tempo_medio,
+)
+from app.utils import inicio_do_dia_local_em_utc, naive_utc
 
 # Opções de "exibir" na lista do técnico
 ESCOPOS_TECNICO = ("disponiveis", "meus", "todos")
@@ -71,7 +85,7 @@ def obter_chamado_visivel(chamado_id, usuario):
     return db.session.execute(consulta).unique().scalar_one_or_none()
 
 
-def listar_chamados(usuario, status="", prioridade="", escopo=None, limite=None):
+def listar_chamados(usuario, status="", prioridade="", escopo=None, limite=None, categoria=""):
     """Lista os chamados que o usuário pode ver, com filtros opcionais."""
     consulta = select(Chamado).options(
         joinedload(Chamado.solicitante), joinedload(Chamado.tecnico)
@@ -91,6 +105,8 @@ def listar_chamados(usuario, status="", prioridade="", escopo=None, limite=None)
         consulta = consulta.where(Chamado.status == status)
     if prioridade:
         consulta = consulta.where(Chamado.prioridade == prioridade)
+    if categoria:
+        consulta = consulta.where(Chamado.categoria == categoria)
 
     if not usuario.is_tecnico:
         consulta = consulta.order_by(Chamado.criado_em.desc(), Chamado.id.desc())
@@ -117,26 +133,170 @@ def contar_por_status(condicao):
     return contagem
 
 
-def resumo_funcionario(usuario):
-    """Dados do dashboard do funcionário."""
+def _parametros_tempo(agora, horas_fuso, limite_alerta_horas):
+    """Resolve 'agora', o fuso e o limite do alerta (da configuração, se omitidos).
+
+    Os parâmetros existem para que os testes possam fixar a data e o limite.
+    """
+    configuracao = current_app.config
+    agora = naive_utc(agora if agora is not None else agora_utc())
+    if horas_fuso is None:
+        horas_fuso = configuracao.get("FUSO_HORARIO_HORAS", -3)
+    if limite_alerta_horas is None:
+        limite_alerta_horas = configuracao.get("ALERTA_ESPERA_HORAS", 24)
+    return agora, horas_fuso, limite_alerta_horas
+
+
+def _ultimas_atualizacoes(usuario, limite=5):
+    """Últimos eventos (assumido, comentário, conclusão) dos chamados DO usuário."""
+    consulta = (
+        select(HistoricoChamado)
+        .join(Chamado, HistoricoChamado.chamado_id == Chamado.id)
+        .where(
+            Chamado.solicitante_id == usuario.id,
+            HistoricoChamado.tipo != EVENTO_ABERTURA,
+        )
+        .options(joinedload(HistoricoChamado.autor), joinedload(HistoricoChamado.chamado))
+        .order_by(HistoricoChamado.criado_em.desc(), HistoricoChamado.id.desc())
+        .limit(limite)
+    )
+    return db.session.execute(consulta).unique().scalars().all()
+
+
+def resumo_funcionario(usuario, agora=None, horas_fuso=None, limite_alerta_horas=None):
+    """Dados do dashboard do funcionário.
+
+    "contagem" e "recentes" são as chaves originais (cobertas por testes). As
+    demais são os indicadores da Etapa 4. Toda consulta é restrita aos chamados
+    abertos pelo próprio usuário.
+    """
+    agora, horas, limite = _parametros_tempo(agora, horas_fuso, limite_alerta_horas)
+    meus = Chamado.solicitante_id == usuario.id
+    contagem = contar_por_status(meus)
+
+    # Chamados ainda não concluídos: prioridade e tempo de espera
+    pendentes = db.session.execute(
+        select(Chamado.id, Chamado.prioridade, Chamado.status, Chamado.criado_em).where(
+            meus, Chamado.status != STATUS_CONCLUIDO
+        )
+    ).all()
+    aguardando = [(p.id, p.criado_em) for p in pendentes if p.status == STATUS_ABERTO]
+
+    # Tempo médio de resolução (abertura até conclusão)
+    concluidos = db.session.execute(
+        select(Chamado.criado_em, Chamado.concluido_em).where(
+            meus, Chamado.status == STATUS_CONCLUIDO, Chamado.concluido_em.is_not(None)
+        )
+    ).all()
+
+    # Janela de 7 dias: abertos (criado_em) e concluídos (concluido_em)
+    inicio_7d = inicio_do_dia_local_em_utc(agora, horas, dias_atras=6)
+    janela = db.session.execute(
+        select(Chamado.criado_em, Chamado.concluido_em).where(
+            meus, or_(Chamado.criado_em >= inicio_7d, Chamado.concluido_em >= inicio_7d)
+        )
+    ).all()
+
     return {
-        "contagem": contar_por_status(Chamado.solicitante_id == usuario.id),
+        "contagem": contagem,
         "recentes": listar_chamados(usuario, limite=5),
+        # --- Etapa 4 ---
+        "total_chamados": sum(contagem.values()),
+        "barra_status": barra_status(contagem, STATUS_LABELS),
+        "por_prioridade": barras_prioridade(
+            contar_chaves((p.prioridade for p in pendentes), PRIORIDADE_LABELS),
+            PRIORIDADE_LABELS,
+        ),
+        "espera": resumir_espera(aguardando, agora, limite),
+        "tempo_medio_resolucao": tempo_medio([(c.criado_em, c.concluido_em) for c in concluidos]),
+        "ultimas_atualizacoes": _ultimas_atualizacoes(usuario),
+        "serie_7_dias": serie_dupla(
+            [j.criado_em for j in janela],
+            [j.concluido_em for j in janela],
+            agora, "abertos", "concluidos", dias=7, horas=horas,
+        ),
+        "limite_alerta_horas": limite,
     }
 
 
-def resumo_tecnico(usuario):
-    """Dados do dashboard do técnico."""
+def resumo_tecnico(usuario, agora=None, horas_fuso=None, limite_alerta_horas=None):
+    """Dados do dashboard do técnico.
+
+    Privacidade: a fila (chamados disponíveis) é visível a qualquer técnico; todos
+    os demais indicadores usam somente chamados e eventos DO PRÓPRIO técnico.
+    Não há dados sobre outros técnicos.
+    """
+    agora, horas, limite = _parametros_tempo(agora, horas_fuso, limite_alerta_horas)
     meus = contar_por_status(Chamado.tecnico_id == usuario.id)
     total_disponiveis = db.session.scalar(
         select(func.count(Chamado.id)).where(_disponivel())
     )
+    meus_ativos = listar_chamados(usuario, escopo="meus", status=STATUS_EM_ANDAMENTO)
+
+    # Fila de chamados disponíveis: prioridade e tempo de espera
+    fila = db.session.execute(
+        select(Chamado.id, Chamado.prioridade, Chamado.criado_em).where(_disponivel())
+    ).all()
+
+    # Conclusões do técnico nos últimos 30 dias
+    inicio_hoje = inicio_do_dia_local_em_utc(agora, horas)
+    inicio_7d = inicio_do_dia_local_em_utc(agora, horas, dias_atras=6)
+    inicio_30d = inicio_do_dia_local_em_utc(agora, horas, dias_atras=29)
+    conclusoes = db.session.scalars(
+        select(Chamado.concluido_em).where(
+            Chamado.tecnico_id == usuario.id,
+            Chamado.status == STATUS_CONCLUIDO,
+            Chamado.concluido_em >= inicio_30d,
+        )
+    ).all()
+
+    # Tempo médio de resolução dos chamados concluídos pelo técnico
+    concluidos = db.session.execute(
+        select(Chamado.criado_em, Chamado.concluido_em).where(
+            Chamado.tecnico_id == usuario.id,
+            Chamado.status == STATUS_CONCLUIDO,
+            Chamado.concluido_em.is_not(None),
+        )
+    ).all()
+
+    # Chamados que o técnico assumiu nos últimos 7 dias (evento do próprio técnico)
+    assumidos = db.session.scalars(
+        select(HistoricoChamado.criado_em).where(
+            HistoricoChamado.tipo == EVENTO_ASSUMIDO,
+            HistoricoChamado.autor_id == usuario.id,
+            HistoricoChamado.criado_em >= inicio_7d,
+        )
+    ).all()
+
+    # Atendimentos em andamento sem atualização há mais tempo que o limite do alerta
+    limite_parado = agora - timedelta(hours=limite)
+    ids_parados = [c.id for c in meus_ativos if naive_utc(c.atualizado_em) < limite_parado]
+
     return {
         "total_disponiveis": total_disponiveis,
         "em_andamento": meus[STATUS_EM_ANDAMENTO],
         "concluidos": meus[STATUS_CONCLUIDO],
         "disponiveis": listar_chamados(usuario, escopo="disponiveis", limite=5),
-        "meus_ativos": listar_chamados(usuario, escopo="meus", status=STATUS_EM_ANDAMENTO),
+        "meus_ativos": meus_ativos,
+        # --- Etapa 4 ---
+        "fila_por_prioridade": barras_prioridade(
+            contar_chaves((f.prioridade for f in fila), PRIORIDADE_LABELS),
+            PRIORIDADE_LABELS,
+        ),
+        "espera_fila": resumir_espera([(f.id, f.criado_em) for f in fila], agora, limite),
+        "carga_por_prioridade": barras_prioridade(
+            contar_chaves((c.prioridade for c in meus_ativos), PRIORIDADE_LABELS),
+            PRIORIDADE_LABELS,
+        ),
+        "concluidos_hoje": contar_desde(conclusoes, inicio_hoje),
+        "concluidos_7_dias": contar_desde(conclusoes, inicio_7d),
+        "concluidos_30_dias": len(conclusoes),
+        "tempo_medio_resolucao": tempo_medio([(c.criado_em, c.concluido_em) for c in concluidos]),
+        "ids_parados": ids_parados,
+        "serie_7_dias": serie_dupla(
+            assumidos, conclusoes, agora, "assumidos", "concluidos", dias=7, horas=horas,
+        ),
+        "limite_alerta_horas": limite,
     }
 
 

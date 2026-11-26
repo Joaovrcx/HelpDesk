@@ -10,7 +10,8 @@
 <span class="badge {{ cores.get(chamado.prioridade, 'text-bg-secondary') }}">{{ chamado.prioridade_legivel }}</span>
 {%- endmacro %}
 
-{% macro tabela_chamados(chamados, mostrar_solicitante=false) %}
+{# destacar_ids (opcional): ids de chamados a destacar como alerta visual #}
+{% macro tabela_chamados(chamados, mostrar_solicitante=false, destacar_ids=none, rotulo_alerta='Em espera') %}
 {% if chamados %}
 <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
@@ -30,9 +31,10 @@
         </thead>
         <tbody>
             {% for c in chamados %}
-            <tr>
+            {% set destaque = destacar_ids and c.id in destacar_ids %}
+            <tr{% if destaque %} class="table-warning"{% endif %}>
                 <td>{{ c.id }}</td>
-                <td><a href="{{ url_for('chamados.detalhe', chamado_id=c.id) }}">{{ c.titulo }}</a></td>
+                <td><a href="{{ url_for('chamados.detalhe', chamado_id=c.id) }}">{{ c.titulo }}</a>{% if destaque %} <span class="badge text-bg-warning border border-warning-subtle">{{ rotulo_alerta }}</span>{% endif %}</td>
                 <td class="d-none d-md-table-cell">{{ c.categoria_legivel }}</td>
                 <td>{{ badge_prioridade(c) }}</td>
                 <td>{{ badge_status(c) }}</td>
