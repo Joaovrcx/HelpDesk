@@ -175,3 +175,131 @@ body {
     background-color: var(--hd-primary);
     border: 2px solid var(--hd-bg);
 }
+
+/* =====================================================================
+   9. Indicadores dos dashboards (Etapa 4) - somente CSS e SVG
+   ===================================================================== */
+:root {
+    --hd-cor-aberto: #e0a800;
+    --hd-cor-andamento: var(--hd-primary);
+    --hd-cor-concluido: #198754;
+    --hd-cor-alta: #dc3545;
+    --hd-cor-media: #0aa2c0;
+    --hd-cor-baixa: #6c757d;
+}
+
+.hd-kpi-numero {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--hd-text);
+}
+
+.hd-kpi-rotulo {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.hd-kpi-alerta .hd-kpi-numero {
+    color: #b02a37;
+}
+
+/* Barra empilhada por status */
+.hd-barra-empilhada {
+    display: flex;
+    height: 1.25rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background-color: #e9ecef;
+}
+
+.hd-barra-empilhada > span {
+    display: block;
+    height: 100%;
+}
+
+.hd-cor-aberto { background-color: var(--hd-cor-aberto); }
+.hd-cor-em_andamento { background-color: var(--hd-cor-andamento); }
+.hd-cor-concluido { background-color: var(--hd-cor-concluido); }
+.hd-cor-alta { background-color: var(--hd-cor-alta); }
+.hd-cor-media { background-color: var(--hd-cor-media); }
+.hd-cor-baixa { background-color: var(--hd-cor-baixa); }
+
+.hd-legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.9rem;
+}
+
+.hd-legenda-cor {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-right: 0.35rem;
+    border-radius: 2px;
+    vertical-align: -1px;
+}
+
+/* Barras horizontais por prioridade */
+.hd-barra-linha {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr 2rem;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.hd-barra-trilho {
+    height: 0.9rem;
+    border-radius: 0.45rem;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.hd-barra-preenchimento {
+    height: 100%;
+    border-radius: 0.45rem;
+}
+
+.hd-barra-valor {
+    text-align: right;
+    font-weight: 600;
+}
+
+/* Gráfico SVG dos últimos 7 dias */
+.hd-grafico {
+    width: 100%;
+    height: auto;
+    max-height: 220px;
+}
+
+.hd-grafico text {
+    font-size: 11px;
+    fill: #495057;
+}
+
+.hd-grafico .hd-eixo {
+    stroke: #ced4da;
+    stroke-width: 1;
+}
+
+.hd-grafico .hd-barra-a { fill: var(--hd-cor-andamento); }
+.hd-grafico .hd-barra-b { fill: var(--hd-cor-concluido); }
+
+.hd-legenda-a { background-color: var(--hd-cor-andamento); }
+.hd-legenda-b { background-color: var(--hd-cor-concluido); }
+
+/* Últimas atualizações */
+.hd-atualizacao {
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.hd-atualizacao:last-child {
+    border-bottom: 0;
+}

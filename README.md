@@ -31,6 +31,21 @@ sistema e a equipe de suporte acompanha e resolve cada problema de informática.
 - Consulta os chamados que já atendeu
 - Dashboard com disponíveis, em andamento e concluídos por ele
 
+## Indicadores dos dashboards (Etapa 4, Fase A)
+
+Calculados a partir dos dados que já existem (nenhuma tabela ou coluna nova, sem migração).
+Gráficos feitos só com CSS e SVG, sem bibliotecas extras.
+
+- **Funcionário** (somente os próprios chamados): total, aguardando técnico e maior espera,
+  tempo médio de resolução, barra por status, pendentes por prioridade, gráfico de abertos x
+  concluídos nos últimos 7 dias e últimas atualizações.
+- **Técnico**: fila disponível por prioridade e maior espera (a fila é visível a todos os técnicos);
+  os demais indicadores são **somente do próprio técnico** (concluídos hoje/7/30 dias, tempo médio,
+  carga por prioridade, assumidos x concluídos em 7 dias). Não há ranking nem dados de outros técnicos.
+- **Alerta visual**: chamados *abertos* há mais de 24 h (e atendimentos do técnico sem atualização
+  há mais de 24 h) ganham destaque amarelo. **Não é um SLA.** Ajuste com `ALERTA_ESPERA_HORAS` no `.env`.
+- Os "dias" seguem o horário local (`FUSO_HORARIO_HORAS`).
+
 ## Regras dos chamados
 
 | Item         | Valores                                    |
@@ -84,7 +99,8 @@ HelpDesk/
 │   ├── decorators.py      # Controle de acesso por tipo de usuário
 │   ├── errors.py          # Páginas de erro (403, 404, CSRF)
 │   ├── cli.py             # Comandos administrativos
-│   ├── utils.py           # Funções auxiliares
+│   ├── utils.py           # Funções auxiliares (datas, durações, percentuais)
+│   ├── indicadores.py     # Montagem dos indicadores dos dashboards (lógica pura)
 │   ├── routes/
 │   │   ├── main.py        # Página inicial
 │   │   ├── auth.py        # Cadastro, login e logout
@@ -93,7 +109,7 @@ HelpDesk/
 │   ├── templates/
 │   │   ├── base.html, home.html, _macros.html
 │   │   ├── auth/          # login.html, cadastro.html
-│   │   ├── painel/        # index.html, funcionario.html, tecnico.html
+│   │   ├── painel/        # index.html, funcionario.html, tecnico.html, _indicadores.html
 │   │   ├── chamados/      # lista.html, novo.html, detalhe.html, _macros.html
 │   │   └── errors/        # error.html
 │   └── static/            # css/style.css, js/script.js
@@ -101,7 +117,9 @@ HelpDesk/
 ├── tests/
 │   ├── base_testes.py     # Base compartilhada (banco temporário, limpeza, auxiliares)
 │   ├── test_auth.py       # Testes da Etapa 2
-│   └── test_chamados.py   # Testes da Etapa 3
+│   ├── test_chamados.py   # Testes da Etapa 3
+│   ├── test_indicadores_puros.py  # Testes das funções de indicadores (sem banco)
+│   └── test_dashboards.py # Testes dos dashboards (Etapa 4)
 ├── config.py
 ├── run.py
 ├── requirements.txt
@@ -217,6 +235,10 @@ Cobertura da Etapa 3: estrutura e relacionamentos do banco, preservação dos us
 tabelas novas, abertura de chamados, validações, permissões de funcionários e técnicos,
 visibilidade, filtros, atribuição, comentários, conclusão, histórico, datas, CSRF e
 concorrência (várias threads tentando assumir o mesmo chamado, por serviço e por HTTP).
+
+Cobertura da Etapa 4: cálculos dos indicadores (durações, percentuais, janelas de 7 dias e virada
+de dia no fuso local), isolamento entre funcionários e entre técnicos, alerta de 24 h, estados
+vazios, HTML escapado, permissões inalteradas e limite de consultas SQL por dashboard.
 
 ## Limitações conhecidas
 

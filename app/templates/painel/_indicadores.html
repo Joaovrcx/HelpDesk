@@ -1,0 +1,119 @@
+{# Macros dos indicadores dos dashboards (Etapa 4). Somente HTML, CSS e SVG. #}
+
+{% macro kpi(valor, rotulo, detalhe=none, alerta=false) %}
+<div class="card hd-card hd-static h-100 {% if alerta %}hd-kpi-alerta{% endif %}">
+    <div class="card-body">
+        <div class="hd-kpi-numero">{{ valor }}</div>
+        <div class="hd-kpi-rotulo">{{ rotulo }}</div>
+        {% if detalhe %}<div class="small text-muted mt-1">{{ detalhe }}</div>{% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro grafico_status(dados) %}
+{% if dados.total %}
+<div class="hd-barra-empilhada" role="img"
+     aria-label="Distribuição dos chamados por status: {% for i in dados.itens %}{{ i.rotulo }} {{ i.quantidade }}{% if not loop.last %}, {% endif %}{% endfor %}.">
+    {% for i in dados['itens'] if i.quantidade %}
+    <span class="hd-cor-{{ i.chave }}" style="width: {{ i.largura }}%" title="{{ i.rotulo }}: {{ i.quantidade }}"></span>
+    {% endfor %}
+</div>
+<ul class="hd-legenda">
+    {% for i in dados['itens'] %}
+    <li><span class="hd-legenda-cor hd-cor-{{ i.chave }}"></span>{{ i.rotulo }}: <strong>{{ i.quantidade }}</strong> ({{ i.percentual }}%)</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted mb-0">Nenhum chamado para mostrar.</p>
+{% endif %}
+{% endmacro %}
+
+{% macro barras_prioridade(dados, vazio="Nenhum chamado.") %}
+{% if dados.total %}
+{% for i in dados['itens'] %}
+<div class="hd-barra-linha">
+    <span>{{ i.rotulo }}</span>
+    <div class="hd-barra-trilho" role="progressbar" aria-label="{{ i.rotulo }}"
+         aria-valuemin="0" aria-valuemax="{{ dados.maximo }}" aria-valuenow="{{ i.quantidade }}">
+        <div class="hd-barra-preenchimento hd-cor-{{ i.chave }}" style="width: {{ i.largura }}%"></div>
+    </div>
+    <span class="hd-barra-valor">{{ i.quantidade }}</span>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-muted mb-0">{{ vazio }}</p>
+{% endif %}
+{% endmacro %}
+
+{% macro grafico_7_dias(serie, chave_a, rotulo_a, chave_b, rotulo_b) %}
+{% set valores = (serie | map(attribute=chave_a) | list) + (serie | map(attribute=chave_b) | list) %}
+{% set maximo = ([1] + valores) | max %}
+{% set largura = 420 %}
+{% set base = 140 %}
+{% set altura_util = 110 %}
+{% set passo = (largura - 20) / (serie | length) %}
+<svg class="hd-grafico" viewBox="0 0 {{ largura }} 170" role="img"
+     aria-label="Gráfico de barras dos últimos 7 dias: {{ rotulo_a }} e {{ rotulo_b }} por dia. Os valores também estão na tabela abaixo.">
+    <line class="hd-eixo" x1="10" y1="{{ base }}" x2="{{ largura - 10 }}" y2="{{ base }}"></line>
+    {% for p in serie %}
+    {% set x0 = 10 + loop.index0 * passo + (passo - 44) / 2 %}
+    {% set ha = p[chave_a] * altura_util / maximo %}
+    {% set hb = p[chave_b] * altura_util / maximo %}
+    <g>
+        <rect class="hd-barra-a" x="{{ x0 }}" y="{{ base - ha }}" width="20" height="{{ ha }}" rx="2">
+            <title>{{ p.data.strftime('%d/%m') }} - {{ rotulo_a }}: {{ p[chave_a] }}</title>
+        </rect>
+        <rect class="hd-barra-b" x="{{ x0 + 24 }}" y="{{ base - hb }}" width="20" height="{{ hb }}" rx="2">
+            <title>{{ p.data.strftime('%d/%m') }} - {{ rotulo_b }}: {{ p[chave_b] }}</title>
+        </rect>
+        {% if p[chave_a] %}<text x="{{ x0 + 10 }}" y="{{ base - ha - 4 }}" text-anchor="middle">{{ p[chave_a] }}</text>{% endif %}
+        {% if p[chave_b] %}<text x="{{ x0 + 34 }}" y="{{ base - hb - 4 }}" text-anchor="middle">{{ p[chave_b] }}</text>{% endif %}
+        <text x="{{ x0 + 22 }}" y="{{ base + 16 }}" text-anchor="middle">{{ p.data.strftime('%d/%m') }}</text>
+    </g>
+    {% endfor %}
+</svg>
+<ul class="hd-legenda">
+    <li><span class="hd-legenda-cor hd-legenda-a"></span>{{ rotulo_a }}</li>
+    <li><span class="hd-legenda-cor hd-legenda-b"></span>{{ rotulo_b }}</li>
+</ul>
+<table class="visually-hidden">
+    <caption>Últimos 7 dias</caption>
+    <thead><tr><th scope="col">Dia</th><th scope="col">{{ rotulo_a }}</th><th scope="col">{{ rotulo_b }}</th></tr></thead>
+    <tbody>
+        {% for p in serie %}
+        <tr><th scope="row">{{ p.data.strftime('%d/%m') }}</th><td>{{ p[chave_a] }}</td><td>{{ p[chave_b] }}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endmacro %}
+
+{% macro aviso_espera(espera, limite_horas, texto_um, texto_varios) %}
+{% if espera.quantidade_longa %}
+<div class="alert alert-warning d-flex align-items-start gap-2 mb-0" role="alert">
+    <span aria-hidden="true">&#9888;</span>
+    <div>
+        {% if espera.quantidade_longa == 1 %}{{ texto_um }}{% else %}{{ texto_varios.format(espera.quantidade_longa) }}{% endif %}
+        há mais de {{ limite_horas }} h.
+        <span class="small text-muted">(Alerta visual, não é um prazo de atendimento.)</span>
+    </div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro atualizacoes(eventos) %}
+{% if eventos %}
+<div>
+    {% for e in eventos %}
+    <div class="hd-atualizacao">
+        <div class="d-flex flex-wrap justify-content-between gap-1">
+            <a href="{{ url_for('chamados.detalhe', chamado_id=e.chamado.id) }}">#{{ e.chamado.id }} {{ e.chamado.titulo }}</a>
+            <span class="text-muted small">{{ e.criado_em|datahora }}</span>
+        </div>
+        <div class="small"><strong>{{ e.tipo_legivel }}</strong> por {{ e.autor.nome }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p class="text-muted mb-0">Nenhuma atualização ainda.</p>
+{% endif %}
+{% endmacro %}

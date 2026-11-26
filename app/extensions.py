@@ -31,5 +31,8 @@ login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 login_manager.login_message = "Faça login para acessar esta página."
 login_manager.login_message_category = "warning"
-# Se o IP/navegador da sessão mudar, a sessão é invalidada
-login_manager.session_protection = "strong"
+# "basic": se o IP/User-Agent mudar (ex.: simulação mobile no DevTools), a sessão
+# é apenas marcada como "não fresca" e o usuário continua logado. O modo "strong"
+# apagava a sessão inteira, deslogando quem trocava de User-Agent. O app não usa
+# fresh_login_required, então isso não altera nenhuma regra de acesso.
+login_manager.session_protection = "basic"

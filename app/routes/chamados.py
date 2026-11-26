@@ -17,6 +17,7 @@ from app.decorators import tipo_required
 from app.extensions import db
 from app.forms import ChamadoForm, ComentarioForm, ConclusaoForm
 from app.models import (
+    CATEGORIA_LABELS,
     PRIORIDADE_LABELS,
     STATUS_LABELS,
     TIPO_FUNCIONARIO,
@@ -62,6 +63,7 @@ def lista():
     usuario = _usuario()
     status = _filtro(request.args.get("status"), STATUS_LABELS)
     prioridade = _filtro(request.args.get("prioridade"), PRIORIDADE_LABELS)
+    categoria = _filtro(request.args.get("categoria"), CATEGORIA_LABELS)
 
     if usuario.is_tecnico:
         escopo = _filtro(request.args.get("escopo"), services.ESCOPOS_TECNICO) or "disponiveis"
@@ -71,13 +73,18 @@ def lista():
         titulo = "Meus chamados"
 
     chamados = services.listar_chamados(
-        usuario, status=status, prioridade=prioridade, escopo=escopo
+        usuario, status=status, prioridade=prioridade, escopo=escopo, categoria=categoria
     )
     return render_template(
         "chamados/lista.html",
         chamados=chamados,
         titulo_pagina=titulo,
-        filtros={"status": status, "prioridade": prioridade, "escopo": escopo},
+        filtros={
+            "status": status,
+            "prioridade": prioridade,
+            "categoria": categoria,
+            "escopo": escopo,
+        },
     )
 
 
